@@ -6,4 +6,4 @@ apt-get install cmake > /dev/null 2>&1
 pip install --upgrade setuptools 2>&1
 pip install ez_setup > /dev/null 2>&1
 
-pip install -r ../requirements.txt > /dev/null 2>&1
+pip install -r requirements.txt > /dev/null 2>&1
