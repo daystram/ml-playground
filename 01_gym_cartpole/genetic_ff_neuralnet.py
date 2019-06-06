@@ -1,15 +1,12 @@
 import numpy as np
 import pprint as p
 
-# FF Neural Network Agent
-
+# Activation Methods
 def activation_unit(x):
     if x > 0:
         return 1
     else:
         return 0
-
-unit = np.vectorize(activation_unit)
 
 def activation_sign(x):
     if x > 0:
@@ -17,17 +14,20 @@ def activation_sign(x):
     else:
         return -1
 
-sign = np.vectorize(activation_sign)
-
 def activation_relu(x):
     if x > 0:
         return x
     else:
         return 0
 
-relu = np.vectorize(activation_relu)
+activation = {
+    'unit': np.vectorize(activation_unit),
+    'sign': np.vectorize(activation_sign),
+    'relu': np.vectorize(activation_relu)
+}
 
 
+# FF Neural Network Agent
 class Agent:
 
     def __init__(self, shape, rate=0.5):
@@ -38,28 +38,25 @@ class Agent:
         self.bias = []      # 1D
         self.rate = rate
 
-        for l, width in enumerate(self.shape[1:]):
+        for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
             layer_bias = []
-            for node in range(width):
-                layer_weight.append(np.random.uniform(-5, 5, self.shape[l]))
+            for node in range(layer[0]):
+                layer_weight.append(np.random.uniform(-5, 5, self.shape[l][0]))
                 layer_bias.append(np.random.uniform(-5, 5))
             self.weights.append(layer_weight)
             self.bias.append(layer_bias)
-        # print('\n------ AGENT: weights, bias ------')
-        # p.pprint(self.weights)
-        # p.pprint(self.bias)
         
     def mutate(self, rate=None):
         if rate is None:
             rate = self.rate
         weights = []
         bias = []
-        for l, width in enumerate(self.shape[1:]):
+        for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
             layer_bias = []
-            for node in range(width):
-                layer_weight.append(self.weights[l][node] + np.random.normal(0, rate, self.shape[l]))
+            for node in range(layer[0]):
+                layer_weight.append(self.weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
                 layer_bias.append(self.bias[l][node] + np.random.normal(0, rate))
             weights.append(layer_weight)
             bias.append(layer_bias)
@@ -75,12 +72,9 @@ class Agent:
         return child
 
     def act(self, observation):
-        #TODO check observation width
         result = np.array(observation)
-
-        for l, _ in enumerate(self.shape[1:]):
-            result = relu(np.dot(self.weights[l], result) + self.bias[l])
-        # print(unit(result))
+        for l, layer in enumerate(self.shape[1:]):
+            result = activation[layer[1]](np.dot(self.weights[l], result) + self.bias[l])
         return np.argmax(result)
 
     def award(self, reward):
@@ -97,6 +91,7 @@ class Agent:
         return copy
 
 
+# Genetic Algorithm Runner
 class Generation:
 
     def __init__(self, wrapper, popSize, genCount, shape, rate=0.5):
@@ -152,7 +147,6 @@ class Generation:
         if self.best is None or best.reward > self.best.reward:
             self.best = best
 
-
     def debug(self, gen):
         best = self.population[0]
         for agent in self.population:
@@ -161,6 +155,7 @@ class Generation:
         print("Generation {:2d}: {:.1f}".format(gen, best.reward))
 
 
+# Environment Wrapper
 class EnvWrapper:
 
     def __init__(self, env, render=False):
@@ -172,8 +167,7 @@ class EnvWrapper:
         s = 0
         while (s < step) or step == -1:
             if self.render: self.env.render()
-            action = agent.act(observation)
-            observation, reward, done, info = self.env.step(action)
+            observation, reward, done, _ = self.env.step(agent.act(observation))
             agent.award(reward)
             s += 1
             if done: break
