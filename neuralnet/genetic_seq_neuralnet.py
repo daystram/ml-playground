@@ -1,5 +1,7 @@
 import numpy as np
 import pprint as p
+import pickle
+import time
 
 # Activation Methods
 def activation_unit(x):
@@ -20,10 +22,18 @@ def activation_relu(x):
     else:
         return 0
 
+def activation_sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def activation_tanh(x):
+    return (np.exp(x) - np.exp(-x)) / (np.exp(x) + np.exp(-x))
+
 activation = {
     'unit': np.vectorize(activation_unit),
     'sign': np.vectorize(activation_sign),
-    'relu': np.vectorize(activation_relu)
+    'relu': np.vectorize(activation_relu),
+    'sigmoid': np.vectorize(activation_sigmoid),
+    'tanh': np.vectorize(activation_tanh)
 }
 
 
@@ -42,8 +52,8 @@ class Agent:
             layer_weight = []
             layer_bias = []
             for node in range(layer[0]):
-                layer_weight.append(np.random.uniform(-5, 5, self.shape[l][0]))
-                layer_bias.append(np.random.uniform(-5, 5))
+                layer_weight.append(np.random.uniform(-2, 2, self.shape[l][0]))
+                layer_bias.append(np.random.uniform(-2, 2))
             self.weights.append(layer_weight)
             self.bias.append(layer_bias)
         
@@ -89,6 +99,21 @@ class Agent:
         copy.weights = self.weights
         copy.bias = self.bias
         return copy
+    
+    @staticmethod
+    def save(agent, filename=None):
+        if filename is None:
+            filename = 'agent-{}.model'.format(time.strftime("%Y%m%d_%H%M%S"))
+        file = open(filename, 'wb')
+        pickle.dump(agent, file=file)
+        file.close()
+
+    @staticmethod
+    def load(filename):
+        file = open(filename, 'rb')
+        agent = pickle.load(file)
+        file.close()
+        return agent
 
 
 # Genetic Algorithm Runner
@@ -121,6 +146,7 @@ class Generation:
                 agent = self.env.execute(agent)
                 if self.best is None or self.best.reward < agent.reward:
                     self.best = agent.copy()
+                print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
             return self.env.execute(agent)
 
@@ -158,16 +184,19 @@ class Generation:
 # Environment Wrapper
 class EnvWrapper:
 
-    def __init__(self, env, render=False):
+    def __init__(self, env, show=False):
         self.env = env
-        self.render = render
+        self.show = show
 
-    def execute(self, agent, step=5000):
+    def execute(self, agent, step=100000):
         observation = self.env.reset()
         s = 0
         while (s < step) or step == -1:
-            if self.render: self.env.render()
-            observation, reward, done, _ = self.env.step(agent.act(observation))
+            action = agent.act(observation)
+            if self.show: 
+                self.env.render()
+                print(agent.reward)
+            observation, reward, done, _ = self.env.step(action)
             agent.award(reward)
             s += 1
             if done: break

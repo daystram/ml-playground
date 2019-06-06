@@ -1,0 +1,7 @@
+numpy
+pyglet
+gym
+gym[atari]
+tensorflow
+keras
+h5py
