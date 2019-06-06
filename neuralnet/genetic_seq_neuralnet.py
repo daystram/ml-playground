@@ -40,7 +40,7 @@ activation = {
 # FF Neural Network Agent
 class Agent:
 
-    def __init__(self, shape, rate=0.5):
+    def __init__(self, shape, rate=0.5, span=1):
         self.reward = 0     # fitness
 
         self.shape = shape
@@ -52,8 +52,8 @@ class Agent:
             layer_weight = []
             layer_bias = []
             for node in range(layer[0]):
-                layer_weight.append(np.random.uniform(-2, 2, self.shape[l][0]))
-                layer_bias.append(np.random.uniform(-2, 2))
+                layer_weight.append(np.random.uniform(-span, span, self.shape[l][0]))
+                layer_bias.append(np.random.uniform(-span, span))
             self.weights.append(layer_weight)
             self.bias.append(layer_bias)
         
@@ -119,13 +119,16 @@ class Agent:
 # Genetic Algorithm Runner
 class Generation:
 
-    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5):
+    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000):
         self.popSize = popSize
         self.genCount = genCount
         self.rate = rate
-        self.population = [ Agent(shape, self.rate) for _ in range(self.popSize) ]
+        self.span = span
+        self.verbose = verbose
+        self.population = [ Agent(shape, self.rate, self.span) for _ in range(self.popSize) ]
         self.env = wrapper
         self.best = None
+        self.step = step
 
     def run(self):
         print("------ GA: Starting")
@@ -133,7 +136,7 @@ class Generation:
             self.reset()
             self.simulate()
             self.select()
-            self.debug(gen)
+            if self.verbose: self.debug(gen)
         return self.best
         
     def reset(self):
@@ -143,10 +146,10 @@ class Generation:
     def simulate(self, agent=None):
         if agent is None:
             for p, agent in enumerate(self.population):
-                agent = self.env.execute(agent)
+                agent = self.env.execute(agent, self.step)
                 if self.best is None or self.best.reward < agent.reward:
                     self.best = agent.copy()
-                print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
+                if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
             return self.env.execute(agent)
 
@@ -188,14 +191,14 @@ class EnvWrapper:
         self.env = env
         self.show = show
 
-    def execute(self, agent, step=100000):
+    def execute(self, agent, step=1000):
+        agent.reset()
         observation = self.env.reset()
         s = 0
         while (s < step) or step == -1:
             action = agent.act(observation)
             if self.show: 
                 self.env.render()
-                print(agent.reward)
             observation, reward, done, _ = self.env.step(action)
             agent.award(reward)
             s += 1
