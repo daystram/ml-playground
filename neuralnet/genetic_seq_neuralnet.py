@@ -1,5 +1,6 @@
 import numpy as np
 import pprint as p
+import copy as cp
 import pickle
 import time
 
@@ -47,6 +48,7 @@ class Agent:
         self.weights = []   # 2D
         self.bias = []      # 1D
         self.rate = rate
+        self.span = span
 
         for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
@@ -60,23 +62,37 @@ class Agent:
     def mutate(self, rate=None):
         if rate is None:
             rate = self.rate
+        curr_weights = cp.deepcopy(self.weights)
+        curr_bias = cp.deepcopy(self.bias)
         weights = []
         bias = []
         for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
             layer_bias = []
             for node in range(layer[0]):
-                layer_weight.append(self.weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
-                layer_bias.append(self.bias[l][node] + np.random.normal(0, rate))
+                layer_weight.append(curr_weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
+                layer_bias.append(curr_bias[l][node] + np.random.normal(0, rate))
             weights.append(layer_weight)
             bias.append(layer_bias)
-        return weights[:], bias[:]
+        return cp.deepcopy(weights), cp.deepcopy(bias)
+        # weights = cp.deepcopy(self.weights)
+        # bias = cp.deepcopy(self.bias)
+        # if np.random.uniform() < rate:
+        #     l = np.random.randint(1, len(self.shape[1:]))
+        #     n = np.random.randint(0, self.shape[l][0] - 1)
+        #     w = np.random.randint(0, self.shape[l-1][0] - 1)
+        #     weights[l-1][n][w] = np.random.uniform(-self.span, self.span)
+        # if np.random.uniform() < rate:
+        #     l = np.random.randint(1, len(self.shape[1:]))
+        #     n = np.random.randint(0, self.shape[l][0] - 1)
+        #     bias[l-1][n] = np.random.uniform(-self.span, self.span)
+        # return weights, bias
 
     def child(self, rate=None):
         if rate is None:
             rate = self.rate
 
-        child = Agent(self.shape[:], rate)
+        child = Agent(cp.deepcopy(self.shape), rate)
         child.weights, child.bias = self.mutate()
 
         return child
@@ -94,10 +110,10 @@ class Agent:
         self.reward = 0
 
     def copy(self):
-        copy = Agent(self.shape[:], self.rate)
+        copy = Agent(cp.deepcopy(self.shape), self.rate, self.span)
         copy.reward = self.reward
-        copy.weights = self.weights
-        copy.bias = self.bias
+        copy.weights = cp.deepcopy(self.weights)
+        copy.bias = cp.deepcopy(self.bias)
         return copy
     
     @staticmethod
@@ -135,8 +151,8 @@ class Generation:
         for gen in range(self.genCount):
             self.reset()
             self.simulate()
-            self.select()
             if self.verbose: self.debug(gen)
+            self.select()
         return self.best
         
     def reset(self):
@@ -167,14 +183,22 @@ class Generation:
         if rate is None:
             rate = self.rate
 
-        self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
+        self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
+
+        # prob = np.array([ agent.reward for agent in self.population ])
+        # prob /= prob.sum()
+
+        # newpopulation = []
+        # for _ in range(self.popSize):
+        #     parent1, parent2 = tuple(np.random.choice(self.population, 2, p=prob))
+        #     child1, child2 = crossover(parent1, parent2)
 
         best = self.population[0]
         for agent in self.population:
             if agent.reward > best.reward:
                 best = agent
         if self.best is None or best.reward > self.best.reward:
-            self.best = best
+            self.best = best.copy()
 
     def debug(self, gen):
         best = self.population[0]
