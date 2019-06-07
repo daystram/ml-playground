@@ -151,7 +151,7 @@ class Generation:
         for gen in range(self.genCount):
             self.reset()
             self.simulate()
-            if self.verbose: self.debug(gen)
+            self.debug(gen)
             self.select()
         return self.best
         
