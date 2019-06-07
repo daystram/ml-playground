@@ -155,7 +155,7 @@ class Generation:
             self.simulate()
             self.debug(gen)
             self.select()
-        return self.best
+        return self.best, self.record
         
     def reset(self):
         for agent in self.population:
@@ -169,7 +169,7 @@ class Generation:
                     self.best = agent.copy()
                 if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
-            return self.env.execute(agent), self.record
+            return self.env.execute(agent)
 
     def select(self, ratio=0.25, rate=None):
         subdivision = [int(ratio * self.popSize), self.popSize - int(ratio * self.popSize)]
