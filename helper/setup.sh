@@ -1,3 +1,6 @@
+rm -r ml-playground > /dev/null 2>&1
+git clone https://github.com/daystram/ml-playground.git
+
 pip install pyvirtualdisplay > /dev/null 2>&1
 apt-get install -y xvfb python-opengl ffmpeg > /dev/null 2>&1
 
