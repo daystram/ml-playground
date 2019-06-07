@@ -146,6 +146,7 @@ class Generation:
         self.best = None
         self.step = step
         self.elite = elite
+        self.record = []
 
     def run(self):
         print("------ GA: Starting")
@@ -168,7 +169,7 @@ class Generation:
                     self.best = agent.copy()
                 if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
-            return self.env.execute(agent)
+            return self.env.execute(agent), self.record
 
     def select(self, ratio=0.25, rate=None):
         subdivision = [int(ratio * self.popSize), self.popSize - int(ratio * self.popSize)]
@@ -208,6 +209,7 @@ class Generation:
         for agent in self.population:
             if best.reward < agent.reward:
                 best = agent
+        self.record.append(agent.reward)
         print("Generation {:2d}: {:.1f}".format(gen, best.reward))
 
 

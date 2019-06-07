@@ -18,7 +18,7 @@ shape = [(4,),          # input layer
         (2, 'relu')]    # ouput layer
 
 ga = nn.Generation(env, 20, 20, shape, step=10000, span=1, rate=0.3, verbose=True)
-agent = ga.run()
+agent, _ = ga.run()
 
 print("------ GA: Overall Best Reward {:.1f}".format(agent.reward))
 
