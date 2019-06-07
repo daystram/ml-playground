@@ -218,15 +218,17 @@ class EnvWrapper:
     def execute(self, agent, step=1000):
         agent.reset()
         observation = self.env.reset()
+        test = step == -1
         s = 0
-        while (s < step) or step == -1:
+        if step == -1: step = 100000
+        while (s < step):
             action = agent.act(observation)
             if self.show: 
                 self.env.render()
             observation, reward, done, _ = self.env.step(action)
             agent.award(reward)
             s += 1
-            if done: break
+            if done and not test: break
         return agent
 
     def reset(self):
