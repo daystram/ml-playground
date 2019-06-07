@@ -3,7 +3,7 @@ sys.path.append('..')
 import gym
 from neuralnet import genetic_seq_neuralnet as nn
 
-env = nn.EnvWrapper(gym.make('MountainCar-v0'), show=True)
+env = nn.EnvWrapper(gym.make('CartPole-v1'), show=True)
 
 agent = nn.Agent.load(sys.argv[1])
 print("------ Agent: Reward {:.1f}".format(agent.reward))

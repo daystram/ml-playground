@@ -5,3 +5,4 @@ gym[atari]
 tensorflow
 keras
 h5py
+matplotlib

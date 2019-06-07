@@ -1,5 +1,6 @@
 import numpy as np
 import pprint as p
+import copy as cp
 import pickle
 import time
 
@@ -40,43 +41,58 @@ activation = {
 # FF Neural Network Agent
 class Agent:
 
-    def __init__(self, shape, rate=0.5):
+    def __init__(self, shape, rate=0.5, span=1):
         self.reward = 0     # fitness
 
         self.shape = shape
         self.weights = []   # 2D
         self.bias = []      # 1D
         self.rate = rate
+        self.span = span
 
         for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
             layer_bias = []
             for node in range(layer[0]):
-                layer_weight.append(np.random.uniform(-2, 2, self.shape[l][0]))
-                layer_bias.append(np.random.uniform(-2, 2))
+                layer_weight.append(np.random.uniform(-span, span, self.shape[l][0]))
+                layer_bias.append(np.random.uniform(-span, span))
             self.weights.append(layer_weight)
             self.bias.append(layer_bias)
         
     def mutate(self, rate=None):
         if rate is None:
             rate = self.rate
+        curr_weights = cp.deepcopy(self.weights)
+        curr_bias = cp.deepcopy(self.bias)
         weights = []
         bias = []
         for l, layer in enumerate(self.shape[1:]):
             layer_weight = []
             layer_bias = []
             for node in range(layer[0]):
-                layer_weight.append(self.weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
-                layer_bias.append(self.bias[l][node] + np.random.normal(0, rate))
+                layer_weight.append(curr_weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
+                layer_bias.append(curr_bias[l][node] + np.random.normal(0, rate))
             weights.append(layer_weight)
             bias.append(layer_bias)
-        return weights[:], bias[:]
+        return cp.deepcopy(weights), cp.deepcopy(bias)
+        # weights = cp.deepcopy(self.weights)
+        # bias = cp.deepcopy(self.bias)
+        # if np.random.uniform() < rate:
+        #     l = np.random.randint(1, len(self.shape[1:]))
+        #     n = np.random.randint(0, self.shape[l][0] - 1)
+        #     w = np.random.randint(0, self.shape[l-1][0] - 1)
+        #     weights[l-1][n][w] = np.random.uniform(-self.span, self.span)
+        # if np.random.uniform() < rate:
+        #     l = np.random.randint(1, len(self.shape[1:]))
+        #     n = np.random.randint(0, self.shape[l][0] - 1)
+        #     bias[l-1][n] = np.random.uniform(-self.span, self.span)
+        # return weights, bias
 
     def child(self, rate=None):
         if rate is None:
             rate = self.rate
 
-        child = Agent(self.shape[:], rate)
+        child = Agent(cp.deepcopy(self.shape), rate)
         child.weights, child.bias = self.mutate()
 
         return child
@@ -94,10 +110,10 @@ class Agent:
         self.reward = 0
 
     def copy(self):
-        copy = Agent(self.shape[:], self.rate)
+        copy = Agent(cp.deepcopy(self.shape), self.rate, self.span)
         copy.reward = self.reward
-        copy.weights = self.weights
-        copy.bias = self.bias
+        copy.weights = cp.deepcopy(self.weights)
+        copy.bias = cp.deepcopy(self.bias)
         return copy
     
     @staticmethod
@@ -119,22 +135,27 @@ class Agent:
 # Genetic Algorithm Runner
 class Generation:
 
-    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5):
+    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000, elite=False):
         self.popSize = popSize
         self.genCount = genCount
         self.rate = rate
-        self.population = [ Agent(shape, self.rate) for _ in range(self.popSize) ]
+        self.span = span
+        self.verbose = verbose
+        self.population = [ Agent(shape, self.rate, self.span) for _ in range(self.popSize) ]
         self.env = wrapper
         self.best = None
+        self.step = step
+        self.elite = elite
+        self.record = []
 
     def run(self):
         print("------ GA: Starting")
         for gen in range(self.genCount):
             self.reset()
             self.simulate()
-            self.select()
             self.debug(gen)
-        return self.best
+            self.select()
+        return self.best, self.record
         
     def reset(self):
         for agent in self.population:
@@ -143,10 +164,10 @@ class Generation:
     def simulate(self, agent=None):
         if agent is None:
             for p, agent in enumerate(self.population):
-                agent = self.env.execute(agent)
+                agent = self.env.execute(agent, self.step)
                 if self.best is None or self.best.reward < agent.reward:
                     self.best = agent.copy()
-                print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
+                if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
             return self.env.execute(agent)
 
@@ -163,21 +184,32 @@ class Generation:
 
         if rate is None:
             rate = self.rate
+        if self.elite:
+            self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
+        else:
+            self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
 
-        self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
+        # prob = np.array([ agent.reward for agent in self.population ])
+        # prob /= prob.sum()
+
+        # newpopulation = []
+        # for _ in range(self.popSize):
+        #     parent1, parent2 = tuple(np.random.choice(self.population, 2, p=prob))
+        #     child1, child2 = crossover(parent1, parent2)
 
         best = self.population[0]
         for agent in self.population:
             if agent.reward > best.reward:
                 best = agent
         if self.best is None or best.reward > self.best.reward:
-            self.best = best
+            self.best = best.copy()
 
     def debug(self, gen):
         best = self.population[0]
         for agent in self.population:
             if best.reward < agent.reward:
                 best = agent
+        self.record.append(best.reward)
         print("Generation {:2d}: {:.1f}".format(gen, best.reward))
 
 
@@ -188,14 +220,14 @@ class EnvWrapper:
         self.env = env
         self.show = show
 
-    def execute(self, agent, step=100000):
+    def execute(self, agent, step=1000):
+        agent.reset()
         observation = self.env.reset()
         s = 0
-        while (s < step) or step == -1:
+        while s < step or step == -1:
             action = agent.act(observation)
             if self.show: 
                 self.env.render()
-                print(agent.reward)
             observation, reward, done, _ = self.env.step(action)
             agent.award(reward)
             s += 1
