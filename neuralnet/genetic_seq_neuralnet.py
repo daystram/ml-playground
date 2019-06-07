@@ -187,7 +187,7 @@ class Generation:
         if self.elite:
             self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
         else:
-            self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=self.subdivision[1], p=prob) ]
+            self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
 
         # prob = np.array([ agent.reward for agent in self.population ])
         # prob /= prob.sum()
