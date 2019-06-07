@@ -135,7 +135,7 @@ class Agent:
 # Genetic Algorithm Runner
 class Generation:
 
-    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000):
+    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000, elite=False):
         self.popSize = popSize
         self.genCount = genCount
         self.rate = rate
@@ -145,6 +145,7 @@ class Generation:
         self.env = wrapper
         self.best = None
         self.step = step
+        self.elite = elite
 
     def run(self):
         print("------ GA: Starting")
@@ -182,8 +183,10 @@ class Generation:
 
         if rate is None:
             rate = self.rate
-
-        self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
+        if self.elite:
+            self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
+        else:
+            self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=self.subdivision[1], p=prob) ]
 
         # prob = np.array([ agent.reward for agent in self.population ])
         # prob /= prob.sum()
