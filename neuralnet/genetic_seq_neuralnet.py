@@ -209,7 +209,7 @@ class Generation:
         for agent in self.population:
             if best.reward < agent.reward:
                 best = agent
-        self.record.append(agent.reward)
+        self.record.append(best.reward)
         print("Generation {:2d}: {:.1f}".format(gen, best.reward))
 
 
