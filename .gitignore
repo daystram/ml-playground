@@ -154,3 +154,6 @@ dmypy.json
 .history
 
 # End of https://www.gitignore.io/api/python,jupyternotebook,visualstudiocode,jupyternotebooks
+
+*.model
+!*sample.model
