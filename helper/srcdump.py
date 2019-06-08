@@ -8,8 +8,6 @@ def dump(filename):
         code = f.read()
 
     formatter = HtmlFormatter()
-    html = '<style type="text/css">{}</style>{}'.format(
+    return '<style type="text/css">{}</style>{}'.format(
         formatter.get_style_defs('.highlight'),
         highlight(code, PythonLexer(), formatter))
-    print(html)
-    return html

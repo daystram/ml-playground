@@ -59,42 +59,43 @@ class Agent:
             self.weights.append(layer_weight)
             self.bias.append(layer_bias)
         
-    def mutate(self, rate=None):
+    def mutate(self, rate=None, full=False):
         if rate is None:
             rate = self.rate
-        curr_weights = cp.deepcopy(self.weights)
-        curr_bias = cp.deepcopy(self.bias)
-        weights = []
-        bias = []
-        for l, layer in enumerate(self.shape[1:]):
-            layer_weight = []
-            layer_bias = []
-            for node in range(layer[0]):
-                layer_weight.append(curr_weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
-                layer_bias.append(curr_bias[l][node] + np.random.normal(0, rate))
-            weights.append(layer_weight)
-            bias.append(layer_bias)
-        return cp.deepcopy(weights), cp.deepcopy(bias)
-        # weights = cp.deepcopy(self.weights)
-        # bias = cp.deepcopy(self.bias)
-        # if np.random.uniform() < rate:
-        #     l = np.random.randint(1, len(self.shape[1:]))
-        #     n = np.random.randint(0, self.shape[l][0] - 1)
-        #     w = np.random.randint(0, self.shape[l-1][0] - 1)
-        #     weights[l-1][n][w] = np.random.uniform(-self.span, self.span)
-        # if np.random.uniform() < rate:
-        #     l = np.random.randint(1, len(self.shape[1:]))
-        #     n = np.random.randint(0, self.shape[l][0] - 1)
-        #     bias[l-1][n] = np.random.uniform(-self.span, self.span)
-        # return weights, bias
+        if full:
+            curr_weights = cp.deepcopy(self.weights)
+            curr_bias = cp.deepcopy(self.bias)
+            weights = []
+            bias = []
+            for l, layer in enumerate(self.shape[1:]):
+                layer_weight = []
+                layer_bias = []
+                for node in range(layer[0]):
+                    layer_weight.append(curr_weights[l][node] + np.random.normal(0, rate, self.shape[l][0]))
+                    layer_bias.append(curr_bias[l][node] + np.random.normal(0, rate))
+                weights.append(layer_weight)
+                bias.append(layer_bias)
+            return cp.deepcopy(weights), cp.deepcopy(bias)
+        else:
+            weights = cp.deepcopy(self.weights)
+            bias = cp.deepcopy(self.bias)
+            if np.random.uniform() < rate:
+                l = np.random.randint(1, len(self.shape[1:]))
+                n = np.random.randint(0, self.shape[l][0] - 1)
+                w = np.random.randint(0, self.shape[l-1][0] - 1)
+                weights[l-1][n][w] = np.random.uniform(-self.span, self.span)
+            if np.random.uniform() < rate:
+                l = np.random.randint(1, len(self.shape[1:]))
+                n = np.random.randint(0, self.shape[l][0] - 1)
+                bias[l-1][n] = np.random.uniform(-self.span, self.span)
+            return cp.deepcopy(weights), cp.deepcopy(bias)
 
-    def child(self, rate=None):
+    def child(self, full=False, rate=None):
         if rate is None:
             rate = self.rate
 
         child = Agent(cp.deepcopy(self.shape), rate)
-        child.weights, child.bias = self.mutate()
-
+        child.weights, child.bias = self.mutate(full)
         return child
 
     def act(self, observation):
@@ -135,7 +136,7 @@ class Agent:
 # Genetic Algorithm Runner
 class Generation:
 
-    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000, elite=False):
+    def __init__(self, wrapper, popSize, genCount, shape, rate=0.5, span=1, verbose=False, step=1000, elite=False, full_mutation=False):
         self.popSize = popSize
         self.genCount = genCount
         self.rate = rate
@@ -146,6 +147,7 @@ class Generation:
         self.best = None
         self.step = step
         self.elite = elite
+        self.full_mutation = full_mutation
         self.record = []
 
     def run(self):
@@ -185,9 +187,9 @@ class Generation:
         if rate is None:
             rate = self.rate
         if self.elite:
-            self.population = [ agent.child() for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
+            self.population = [ agent.child(self.full_mutation) for agent in np.random.choice(selected, size=self.popSize, p=prob) ]
         else:
-            self.population = list(selected) + [ agent.child() for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
+            self.population = list(selected) + [ agent.child(self.full_mutation) for agent in np.random.choice(selected, size=subdivision[1], p=prob) ]
 
         # prob = np.array([ agent.reward for agent in self.population ])
         # prob /= prob.sum()
