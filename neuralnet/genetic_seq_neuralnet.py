@@ -75,7 +75,7 @@ class Agent:
                     layer_bias.append(curr_bias[l][node] + np.random.normal(0, rate))
                 weights.append(layer_weight)
                 bias.append(layer_bias)
-            return cp.deepcopy(weights), cp.deepcopy(bias)
+            return weights, bias
         else:
             weights = cp.deepcopy(self.weights)
             bias = cp.deepcopy(self.bias)
@@ -111,7 +111,7 @@ class Agent:
         self.reward = 0
 
     def copy(self):
-        copy = Agent(cp.deepcopy(self.shape), self.rate, self.span)
+        copy = Agent(self.shape, self.rate, self.span)
         copy.reward = self.reward
         copy.weights = cp.deepcopy(self.weights)
         copy.bias = cp.deepcopy(self.bias)
@@ -170,7 +170,7 @@ class Generation:
             for p, agent in enumerate(self.population):
                 agent = self.env.execute(agent, self.step)
                 self.genrep.append(agent.reward)
-                if self.best is None or self.best.reward < agent.reward:
+                if self.best is None or self.best.reward <= agent.reward:
                     self.best = agent.copy()
                 if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
         else:
@@ -202,18 +202,7 @@ class Generation:
         #     parent1, parent2 = tuple(np.random.choice(self.population, 2, p=prob))
         #     child1, child2 = crossover(parent1, parent2)
 
-        best = self.population[0]
-        for agent in self.population:
-            if agent.reward > best.reward:
-                best = agent
-        if self.best is None or best.reward > self.best.reward:
-            self.best = best.copy()
-
     def debug(self, gen):
-        best = self.population[0]
-        for agent in self.population:
-            if best.reward < agent.reward:
-                best = agent
         print("Generation {:2d}:  max:{:.1f}\tavg:{:.1f}\tmin:{:.1f}".format(gen + 1, np.amax(self.genrep), np.average(self.genrep), np.amin(self.genrep)))
         self.record.append([np.amax(self.genrep), np.average(self.genrep), np.amin(self.genrep)])
 
