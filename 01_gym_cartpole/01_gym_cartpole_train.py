@@ -10,14 +10,12 @@ print(env.action_space)
 env = nn.EnvWrapper(env, show=False)
 
 shape = [(4,),          # input layer               
-        (128, 'relu'),   # hidden layers
-        (256, 'relu'), 
-        (512, 'relu'), 
-        (256, 'relu'), 
-        (128, 'relu'), 
+        (8, 'relu'),   # hidden layers
+        (16, 'relu'), 
+        (8, 'relu'), 
         (2, 'relu')]    # ouput layer
 
-ga = nn.Generation(env, 20, 20, shape, step=10000, span=1, rate=0.3, verbose=True)
+ga = nn.Generation(env, 20, 20, shape, step=10000, span=1, rate=0.3, verbose=False)
 agent, _ = ga.run()
 
 print("------ GA: Overall Best Reward {:.1f}".format(agent.reward))

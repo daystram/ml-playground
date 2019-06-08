@@ -149,6 +149,7 @@ class Generation:
         self.elite = elite
         self.full_mutation = full_mutation
         self.record = []
+        self.genrep = []
 
     def run(self):
         print("------ GA: Starting")
@@ -165,8 +166,10 @@ class Generation:
     
     def simulate(self, agent=None):
         if agent is None:
+            self.genrep = []
             for p, agent in enumerate(self.population):
                 agent = self.env.execute(agent, self.step)
+                self.genrep.append(agent.reward)
                 if self.best is None or self.best.reward < agent.reward:
                     self.best = agent.copy()
                 if self.verbose: print("--- Agent #{:<2d}: Reward {:3.1f}".format(p, agent.reward))
@@ -211,8 +214,8 @@ class Generation:
         for agent in self.population:
             if best.reward < agent.reward:
                 best = agent
-        self.record.append(best.reward)
-        print("Generation {:2d}: {:.1f}".format(gen, best.reward))
+        print("Generation {:2d}:  max:{:.1f}\tavg:{:.1f}\tmin:{:.1f}".format(gen + 1, np.amax(self.genrep), np.average(self.genrep), np.amin(self.genrep)))
+        self.record.append([np.amax(self.genrep), np.average(self.genrep), np.amin(self.genrep)])
 
 
 # Environment Wrapper
