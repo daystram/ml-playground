@@ -3,7 +3,8 @@ import glob
 import io
 
 from gym.wrappers import Monitor
-from IPython.display import display, HTML
+from IPython.display import HTML
+from IPython.display import display as ip_display
 from pyvirtualdisplay import Display
 
 display = Display(visible=0, size=(1400, 900))
@@ -15,7 +16,7 @@ def show_video():
     mp4 = mp4list[0]
     video = io.open(mp4, 'r+b').read()
     encoded = base64.b64encode(video)
-    display(HTML(data='''
+    ip_display(HTML(data='''
         <video alt="test" autoplay 
             loop controls style="height: 400px;">
             <source src="data:video/mp4;base64,{0}" type="video/mp4" />
