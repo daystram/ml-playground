@@ -20,7 +20,7 @@ The agent is created from scratch, its simple yet flexible enough that we can ea
 ![](01a_demo.gif)
 
 
-### *SL* Deep Neural Network
+### *SL*(Supervised Learning) Deep Neural Network
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/daystram/ml-playground/blob/master/01_gym_cartpole/01b_gym_cartpole_dnn.ipynb)
 
