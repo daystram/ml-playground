@@ -26,4 +26,4 @@ The projects of the same problem/environment will be placed in the same folder. 
 
 
 ## Disclaimer
-Not all practices shown in these examples are guaranteed to be the best and proper. Take the examples as references/guidelines at your own risk. 
+Not all practices shown in these examples are guaranteed to be the best and proper. Take the examples as references/guidelines at your own risk.
