@@ -12,6 +12,8 @@ env = nn.EnvWrapper(env, show=False)
 shape = [(4,),          # input layer               
         (8, 'relu'),   # hidden layers
         (16, 'relu'), 
+        (32, 'relu'), 
+        (16, 'relu'), 
         (8, 'relu'), 
         (2, 'relu')]    # ouput layer
 
